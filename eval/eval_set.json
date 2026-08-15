@@ -1,0 +1,102 @@
+[
+    {
+        "question": "What are the key risk factors for Pfizer based on their most recent 10-K?",
+        "ground_truth_answer": "Pfizer's key risk factors include regulatory changes, increased regulatory requirements, product supply disruptions (e.g., natural disasters, recalls), global economic instability including foreign exchange and inflation, and changes in trade environments such as tariffs.",
+        "ground_truth_ticker": "PFE"
+    },
+    {
+        "question": "What debt obligations does Tesla have coming due?",
+        "ground_truth_answer": "The filings do not contain a dedicated debt maturity table. Based on partial narrative disclosures, Tesla faces credit risks from vehicle financing, has obligations related to Gigafactory New York, and notes that certain debt facilities could be accelerated upon a change in control.",
+        "ground_truth_ticker": "TSLA"
+    },
+    {
+        "question": "How does Apple's revenue growth compare to Microsoft's in the latest quarter?",
+        "ground_truth_answer": "The filings don't contain enough information to answer this. While the filings include individual financial details, a direct cross-ticker comparison or sufficient unified data to compare their revenue growth is not present.",
+        "ground_truth_ticker": ""
+    },
+    {
+        "question": "What active legal proceedings or litigation is Pfizer currently facing?",
+        "ground_truth_answer": "Pfizer is involved in various legal proceedings, including product liability claims, commercial litigation, patent litigation, and government investigations. The outcomes are uncertain and could have a material adverse effect on the company's business.",
+        "ground_truth_ticker": "PFE"
+    },
+    {
+        "question": "How does Tesla describe its competitive position and main competitors in the automotive market?",
+        "ground_truth_answer": "Tesla operates in a highly competitive automotive market. They compete on innovation, performance, safety, and energy efficiency against both established legacy automakers who are aggressively transitioning to EVs and emerging EV-only manufacturers.",
+        "ground_truth_ticker": "TSLA"
+    },
+    {
+        "question": "What are the primary supply chain risks disclosed by Apple?",
+        "ground_truth_answer": "Apple's primary supply chain risks include reliance on single or limited sources for many components, potential supply chain disruptions, manufacturing capacity constraints, and exposure to geopolitical tensions, tariffs, or trade restrictions that could delay or prevent the timely delivery of products.",
+        "ground_truth_ticker": "AAPL"
+    },
+    {
+        "question": "What class of stock does Apple have registered and which exchange is it traded on?",
+        "ground_truth_answer": "Apple has Common Stock, $0.00001 par value per share, registered on The Nasdaq Stock Market LLC. It also has certain Notes registered on the same exchange.",
+        "ground_truth_ticker": "AAPL"
+    },
+    {
+        "question": "What was Apple's cash, cash equivalents, and restricted cash beginning balance according to its most recent 10-Q?",
+        "ground_truth_answer": "According to the June 27, 2026 10-Q, Apple's beginning balance of cash, cash equivalents, and restricted cash and cash equivalents was $35,934 million.",
+        "ground_truth_ticker": "AAPL"
+    },
+    {
+        "question": "How much did Microsoft's Intelligent Cloud revenue increase in the most recent quarter, and what drove it?",
+        "ground_truth_answer": "In the three months ended March 31, 2026, Microsoft's Intelligent Cloud revenue increased, driven specifically by Azure. This contributed to a broader Microsoft Cloud revenue increase of $12.8 billion or 18%.",
+        "ground_truth_ticker": "MSFT"
+    },
+    {
+        "question": "What antitrust or regulatory risks are disclosed by Microsoft?",
+        "ground_truth_answer": "Microsoft faces significant compliance risks from the increasing volume and complexity of compulsory legal demands from law enforcement and governmental authorities regarding customer data. New, existing, and evolving laws and regulations, particularly concerning antitrust and competition, present ongoing regulatory risks.",
+        "ground_truth_ticker": "MSFT"
+    },
+    {
+        "question": "What are Microsoft's primary cash commitments for investing and financing activities?",
+        "ground_truth_answer": "Microsoft's primary cash commitments for investing and financing activities include dividends, share repurchases, debt maturities, and material capital expenditures for at least the next 12 months.",
+        "ground_truth_ticker": "MSFT"
+    },
+    {
+        "question": "What are the main credit risk exposures for JPMorgan Chase?",
+        "ground_truth_answer": "JPMorgan Chase faces credit risk exposure from adverse changes in market conditions in particular segments of the economy and sustained changes in consumer behavior affecting specific economic sectors, which could lead to weaker investment performance or client withdrawals.",
+        "ground_truth_ticker": "JPM"
+    },
+    {
+        "question": "What was JPMorgan Chase's Standardized/Advanced CET1 capital as of December 31, 2025?",
+        "ground_truth_answer": "As of December 31, 2025, JPMorgan Chase reported Standardized/Advanced CET1 capital of $288,469 million.",
+        "ground_truth_ticker": "JPM"
+    },
+    {
+        "question": "What litigation or regulatory proceedings are disclosed by JPMorgan Chase?",
+        "ground_truth_answer": "JPMorgan Chase is subject to legal and regulatory risks arising from the local economic, political, regulatory, and social factors in the various countries where it operates.",
+        "ground_truth_ticker": "JPM"
+    },
+    {
+        "question": "What is the frequency of Pfizer's subsidiary fiscal quarter-ends as detailed in their recent 10-Q?",
+        "ground_truth_answer": "Pfizer's fiscal quarter-end for subsidiaries operating outside the U.S. is as of and for the three and six months ended May 24, 2026, while for U.S. subsidiaries it is as of and for the three and six months ended June 28, 2026.",
+        "ground_truth_ticker": "PFE"
+    },
+    {
+        "question": "What are the risks disclosed by Pfizer regarding patent expiration and exclusivity?",
+        "ground_truth_answer": "Pfizer relies heavily on intellectual property protection. Failure to obtain and maintain adequate intellectual property protection, or the expiration of patents, could allow third parties to launch generic or biosimilar versions of its branded products, negatively impacting revenues.",
+        "ground_truth_ticker": "PFE"
+    },
+    {
+        "question": "What are Tesla's plans regarding Gigafactory expansion and commercialization?",
+        "ground_truth_answer": "Tesla intends to leverage its current operations to develop and commercialize AI products like Full Self-Driving (FSD), Robotaxi, and AI robots (Optimus). While it continues to operate and expand its Gigafactories, these AI and robotics initiatives are a major focus for future commercialization.",
+        "ground_truth_ticker": "TSLA"
+    },
+    {
+        "question": "Which of the 5 companies reports the highest total revenue in its most recent annual filing?",
+        "ground_truth_answer": "According to the parsed filings, JPMorgan Chase reported the highest total net revenue at $182,447 million for 2025. In comparison, Tesla's total revenues were $94,827 million, and Pfizer's total revenues were $62.6 billion. A clean comparison requires aligning the exact fiscal periods and revenue metrics across all 5 parsed 10-K filings.",
+        "ground_truth_ticker": "multi"
+    },
+    {
+        "question": "Do any of the 5 companies disclose cybersecurity incidents in their filings?",
+        "ground_truth_answer": "Yes, multiple companies disclose cybersecurity risks. For example, Microsoft lists 'CYBERSECURITY, DATA PRIVACY, AND PLATFORM ABUSE RISKS' noting that cyberattacks could lead to reduced revenue or liability. Pfizer also discusses managing cybersecurity risk as a crucial part of its Enterprise Risk Management (ERM) approach, and Tesla has a dedicated 'Cybersecurity Risk Management and Strategy' section. However, the exact disclosure of a specific past 'incident' versus 'risks' varies across the narrative sections.",
+        "ground_truth_ticker": "multi"
+    },
+    {
+        "question": "What is Tesla's projected or forecasted stock price for the next fiscal year?",
+        "ground_truth_answer": "The filings don't contain enough information to answer this. SEC filings, such as Tesla's 10-K and 10-Q, disclose historical financial data, risk factors, and some forward-looking business expectations, but they do not disclose projected or forecasted stock prices.",
+        "ground_truth_ticker": "TSLA"
+    }
+]
