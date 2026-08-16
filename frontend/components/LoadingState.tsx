@@ -1,79 +1,39 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { ScanSearch } from 'lucide-react'
-
-const STAGES = [
-  'Retrieving relevant filings',
-  'Extracting cited passages',
-  'Synthesizing a source-backed answer',
-]
-
 export function LoadingState() {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.4 }}
-      className="rounded-xl border border-border bg-card p-6 sm:p-8"
-    >
+    <div className="animate-rise-in flex flex-col gap-6" aria-live="polite" aria-busy="true">
       <div className="flex items-center gap-3">
-        <span className="relative grid size-10 place-items-center rounded-lg bg-primary/15 ring-1 ring-primary/30">
-          <ScanSearch className="size-5 text-primary" />
-          <motion.span
-            className="absolute inset-0 rounded-lg ring-2 ring-primary/40"
-            animate={{ opacity: [0.2, 0.7, 0.2], scale: [1, 1.15, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          />
+        <span
+          className="size-2.5 animate-pulse rounded-full bg-primary"
+          style={{ boxShadow: '0 0 12px var(--glow)' }}
+          aria-hidden="true"
+        />
+        <span className="text-sm text-muted-foreground">
+          Retrieving and reasoning over filings…
         </span>
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            Running due diligence…
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Scanning SEC filings for evidence
-          </p>
-        </div>
       </div>
 
-      <ul className="mt-6 flex flex-col gap-2.5">
-        {STAGES.map((stage, i) => (
-          <motion.li
-            key={stage}
-            initial={{ opacity: 0.3 }}
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{
-              duration: 1.6,
-              repeat: Infinity,
-              delay: i * 0.4,
-              ease: 'easeInOut',
-            }}
-            className="flex items-center gap-2.5 text-sm text-muted-foreground"
-          >
-            <span className="size-1.5 rounded-full bg-primary" />
-            {stage}
-          </motion.li>
-        ))}
-      </ul>
-
-      {/* skeleton lines */}
-      <div className="mt-6 flex flex-col gap-2.5">
-        {[100, 92, 96, 60].map((w, i) => (
-          <motion.div
+      <div className="flex flex-col gap-3">
+        {[100, 92, 96, 70].map((w, i) => (
+          <div
             key={i}
-            className="h-3 rounded-full bg-secondary"
-            style={{ width: `${w}%` }}
-            animate={{ opacity: [0.4, 0.8, 0.4] }}
-            transition={{
-              duration: 1.4,
-              repeat: Infinity,
-              delay: i * 0.15,
-              ease: 'easeInOut',
-            }}
+            className="h-3.5 animate-pulse rounded-full bg-foreground/10"
+            style={{ width: `${w}%`, animationDelay: `${i * 120}ms` }}
           />
         ))}
       </div>
-    </motion.section>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="h-24 animate-pulse rounded-2xl bg-foreground/[0.06]"
+            style={{ animationDelay: `${i * 160}ms` }}
+          />
+        ))}
+      </div>
+      <span className="sr-only">Loading answer</span>
+    </div>
   )
 }

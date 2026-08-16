@@ -1,94 +1,176 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
   --color-border: var(--border);
-  --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
 
-  --color-surface: var(--surface);
-  --color-surface-foreground: var(--surface-foreground);
+  --color-glow: var(--glow);
+  --color-glow-soft: var(--glow-soft);
 
-  --color-conf-high: var(--conf-high);
-  --color-conf-medium: var(--conf-medium);
-  --color-conf-low: var(--conf-low);
+  --color-confidence-high: var(--confidence-high);
+  --color-confidence-medium: var(--confidence-medium);
+  --color-confidence-low: var(--confidence-low);
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 :root {
   color-scheme: dark;
 
-  /* deep charcoal / navy fintech palette */
-  --background: oklch(0.18 0.018 255);
-  --foreground: oklch(0.95 0.008 255);
+  /* near-black background with a faint cool tint */
+  --background: oklch(0.13 0.015 275);
+  --foreground: oklch(0.96 0.005 260);
 
-  --card: oklch(0.225 0.02 255);
-  --card-foreground: oklch(0.95 0.008 255);
+  /* glass surfaces */
+  --card: oklch(0.2 0.02 275 / 45%);
+  --card-foreground: oklch(0.96 0.005 260);
 
-  --surface: oklch(0.255 0.022 255);
-  --surface-foreground: oklch(0.95 0.008 255);
+  --muted: oklch(0.28 0.02 275);
+  --muted-foreground: oklch(0.68 0.02 270);
 
-  --popover: oklch(0.225 0.02 255);
-  --popover-foreground: oklch(0.95 0.008 255);
+  /* violet / blue-white glow accent */
+  --primary: oklch(0.72 0.16 275);
+  --primary-foreground: oklch(0.14 0.02 275);
 
-  /* electric blue accent */
-  --primary: oklch(0.68 0.17 250);
-  --primary-foreground: oklch(0.16 0.02 255);
+  --accent: oklch(0.8 0.11 255);
+  --accent-foreground: oklch(0.14 0.02 275);
 
-  --secondary: oklch(0.28 0.022 255);
-  --secondary-foreground: oklch(0.95 0.008 255);
+  --border: oklch(0.75 0.05 270 / 14%);
+  --ring: oklch(0.72 0.16 275 / 55%);
+  --destructive: oklch(0.68 0.19 20);
 
-  --muted: oklch(0.28 0.022 255);
-  --muted-foreground: oklch(0.68 0.02 255);
+  /* glow effect colors */
+  --glow: oklch(0.85 0.13 275);
+  --glow-soft: oklch(0.7 0.15 268);
 
-  --accent: oklch(0.68 0.17 250);
-  --accent-foreground: oklch(0.16 0.02 255);
+  /* confidence dots */
+  --confidence-high: oklch(0.78 0.17 155);
+  --confidence-medium: oklch(0.82 0.16 80);
+  --confidence-low: oklch(0.68 0.19 20);
 
-  --destructive: oklch(0.62 0.2 25);
-
-  --border: oklch(0.35 0.02 255 / 45%);
-  --input: oklch(0.3 0.02 255);
-  --ring: oklch(0.68 0.17 250);
-
-  /* confidence signal colors */
-  --conf-high: oklch(0.72 0.17 155);
-  --conf-medium: oklch(0.78 0.15 80);
-  --conf-low: oklch(0.65 0.2 25);
-
-  --radius: 0.625rem;
+  --radius: 1rem;
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    @apply bg-background;
+  }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+}
+
+@layer utilities {
+  /* frosted glass surface used across cards and pill bars */
+  .glass {
+    background: linear-gradient(
+      180deg,
+      oklch(0.28 0.03 275 / 30%),
+      oklch(0.18 0.02 275 / 25%)
+    );
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+  }
+
+  .glass-glow {
+    box-shadow:
+      0 0 0 1px oklch(0.75 0.12 275 / 12%),
+      0 0 40px -12px oklch(0.72 0.16 275 / 45%),
+      0 24px 60px -30px oklch(0.05 0 0 / 80%);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 24px oklch(0.8 0.14 275 / 45%);
+  }
+}
+
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.03);
+  }
+}
+
+@keyframes ripple-breathe {
+  0%,
+  100% {
+    opacity: 0.28;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes beam-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise-in,
+  [style*='glow-breathe'],
+  [style*='ripple-breathe'],
+  [style*='beam-breathe'],
+  [style*='twinkle'] {
+    animation: none !important;
   }
 }

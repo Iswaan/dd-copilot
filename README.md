@@ -1,111 +1,76 @@
-﻿# 🔍 AI Due Diligence Copilot
+﻿# 🚀 AI Due Diligence Copilot
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/FastAPI-0.103-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Llama_3.3_70B-Groq-f44336?style=for-the-badge" alt="Groq" />
-  <img src="https://img.shields.io/badge/Chroma_DB-Vector_DB-blue?style=for-the-badge" alt="Chroma" />
-</div>
-<br/>
+An enterprise-grade hybrid-RAG (Retrieval-Augmented Generation) pipeline for deep-diving into complex SEC filings, earnings transcripts, and financial documents. Built with FastAPI and Next.js, featuring a stunning glassmorphic UI.
 
-A **highly defensible**, hybrid Retrieval-Augmented Generation (RAG) platform purpose-built for financial analysts. It ingests massive SEC filings, financial statements, and investor materials to produce highly accurate, source-backed due diligence answers with strict inline citations.
+## 📱 Interactive Interface
 
----
+The Copilot features a beautiful, highly responsive, mobile-first frontend. Below is a real-time demonstration of the end-to-end query flow, showcasing the dynamic sunrise hero background and interactive citation system:
 
-## ✨ Key Features
+![UI Demonstration](assets/demo.webp)
 
-- **Hybrid Retrieval Engine**: Fuses dense vector embeddings (Chroma DB) with sparse keyword matching (BM25) to catch both semantic intent and exact financial metrics.
-- **Cross-Encoder Reranking**: Utilizes `BAAI/bge-reranker-v2-m3` to mathematically score and re-order chunks, surfacing only the most highly relevant context.
-- **Defensibility-First Generation**: Powered by `Llama-3.3-70b-versatile` via Groq. Every claim is strictly backed by inline `[chunk_id]` citations linked directly to the source text.
-- **Automated Confidence Scoring**: The pipeline evaluates its own retrieved context and assigns a deterministic confidence tier (High, Medium, Low) to prevent hallucinations.
-- **Rigorous Evaluation Harness**: Integrates the **RAGAS** framework running via a local `llama3` judge to continuously score Faithfulness, Context Recall, Context Precision, and Answer Relevancy.
-- **Modern Full-Stack UI**: A sleek, reactive Next.js frontend built with TailwindCSS, seamlessly communicating with a high-performance Python FastAPI backend.
+## 🏗 Architecture & Features
 
----
+This system is built from the ground up to solve the hardest challenges in financial RAG (hallucinations, loss of context, and source attribution):
 
-## 🏗️ Architecture Flow
+- **Hybrid Retrieval (Ensemble)**: Combines dense vector semantic search (BGE-Large via ChromaDB) with sparse keyword search (BM25) to capture both high-level semantic meaning and exact-match financial metrics/acronyms.
+- **Cross-Encoder Reranking**: Uses BAAI/bge-reranker-v2-m3 to re-score and perfectly order the top chunks retrieved by the hybrid ensemble before they are passed to the LLM context window.
+- **Citation Engine**: Exact source attribution! The generation engine injects UUID markers into its response, which the frontend securely maps into beautifully numbered interactive badges (e.g. [1]). Clicking a badge smoothly scrolls and highlights the exact SEC source chunk card.
+- **Pluggable LLM Backend**: Configured to use Groq (llama-3.3-70b-versatile) for blazing-fast inference, but supports Anthropic, OpenAI, or local Ollama.
+- **RAGAS Evaluation**: Integrated evaluation pipeline that algorithmically scores Faithfulness, Answer Relevance, Context Precision, and Context Recall using a local llama3 judge to ensure production-quality responses without hallucinations.
 
-1. **Ingestion & Indexing**: Raw SEC filings are chunked and embedded via `SentenceTransformers`. The embeddings are stored in Chroma DB, while exact text is indexed via BM25.
-2. **Query Routing**: The user inputs a query via the Next.js frontend, which POSTs to the FastAPI `/query` endpoint.
-3. **Hybrid Search**: The backend runs parallel vector and sparse searches to retrieve the top 20 candidate chunks.
-4. **Reranking**: The BGE Cross-Encoder reranks the 20 candidates down to the definitive top 6 chunks.
-5. **Synthesis**: Groq generates a structured response (Summary, Key Findings, Caveats) strictly constrained to the top 6 chunks.
-6. **Delivery**: The payload, including source cards, citations, and confidence scores, is rendered in the UI.
+## 🛠 Tech Stack
 
----
+### Frontend (Next.js)
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: TailwindCSS with custom glassmorphic aesthetics
+- **Icons & Animation**: Lucide React & Framer Motion
+- **Architecture**: Modular component design (ResultsPanel, SourceGrid, AnswerText citation mapper)
+
+### Backend (Python / FastAPI)
+- **API**: FastAPI (Uvicorn)
+- **Vector Store**: ChromaDB
+- **Embeddings & NLP**: sentence-transformers (BGE), ank_bm25
+- **LLM Integration**: Groq API, LangChain
+- **Evaluation**: RAGAS + local Ollama
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- A valid [Groq API Key](https://console.groq.com/)
+- Groq API Key (or Anthropic/OpenAI)
 
-### 1. Installation
+### Installation
 
-Clone the repository and install dependencies for both the backend and frontend:
+1. **Clone & Setup Environment**
+   `ash
+   git clone <repo_url>
+   cd dd-copilot
+   python -m venv venv
+   source venv/bin/activate  # or venv\Scripts\activate on Windows
+   pip install -r requirements.txt
+   `
 
-```bash
-# Backend Dependencies
-python -m venv venv
-source venv/bin/activate  # Or .\venv\Scripts\activate on Windows
-pip install -r requirements.txt
+2. **Frontend Setup**
+   `ash
+   cd frontend
+   npm install
+   `
 
-# Frontend Dependencies
-cd frontend
-npm install
-cd ..
-```
+3. **Start the Copilot**
+   Use the provided development script to launch both the FastAPI backend and Next.js frontend simultaneously:
+   `ash
+   ./dev.sh
+   `
+   The UI will be available at http://localhost:3000.
 
-### 2. Configuration
+## 🧪 Evaluation
 
-Create a `.env` file in the root directory and add your API keys:
-
-```env
-GROQ_API_KEY="gsk_your_api_key_here"
-# Optional fallback models
-OPENROUTER_API_KEY="sk-or-v1-..." 
-```
-
-### 3. Run the Stack
-
-We provide an orchestration script to spin up the entire application concurrently.
-
-```bash
-bash dev.sh
-```
-
-- The **FastAPI Backend** will launch on `http://localhost:8000`
-- The **Next.js Frontend** will launch on `http://localhost:3000`
-
-Navigate to `http://localhost:3000` to start running due diligence queries!
+To run the RAGAS evaluation pipeline against your local models:
+`ash
+python eval/rerun_q14_20.py
+`
+This incrementally evaluates the system's answers against ground-truth and saves progress to partial_results.json.
 
 ---
-
-## 🧪 Evaluation & Defensibility
-
-We employ the **RAGAS** (Retrieval Augmented Generation Assessment) framework locally via Ollama to rigorously test the pipeline against a curated dataset of SEC-related Q&A pairs without leaking data or burning API credits.
-
-To execute the evaluation suite:
-```bash
-python eval/run_ragas.py
-```
-
-The script automatically tests the pipeline against the dataset and compiles the metric averages (Faithfulness, Relevancy, Precision, Recall) into `eval/results.md`.
-
----
-
-## 📁 Repository Structure
-
-```text
-dd-copilot/
-├── backend/          # FastAPI entry points and API routers
-├── data/             # Raw SEC filings, parsed chunks, and Chroma DB storage
-├── eval/             # RAGAS evaluation harness, datasets, and result outputs
-├── frontend/         # Next.js React application and UI components
-├── generation/       # LLM generation logic, prompts, and confidence scoring
-├── tests/            # Pytest suite for retrieval and generation validation
-├── README.md
-├── dev.sh            # Local startup script
-└── requirements.txt  # Python backend dependencies
-```
+*Built for absolute confidence in AI-assisted financial diligence.*

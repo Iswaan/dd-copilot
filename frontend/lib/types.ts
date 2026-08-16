@@ -1,3 +1,5 @@
+// Contract types shared across the app. Keep these aligned with the API.
+
 export type Confidence = 'high' | 'medium' | 'low'
 
 export interface Citation {
@@ -22,3 +24,5 @@ export interface QueryResponse {
   citations: Citation[]
   confidence: Confidence
 }
+
+export type Status = 'idle' | 'loading' | 'success' | 'error'

@@ -1,76 +1,69 @@
 'use client'
 
-import { Fragment, useMemo } from 'react'
-import { motion } from 'motion/react'
+import { Fragment } from 'react'
+import type { Citation } from '@/lib/types'
 import { CitationBadge } from './CitationBadge'
 
 interface AnswerTextProps {
-  text: string
-  citationCount: number
-  onCite: (index: number) => void
+  answer: string
+  citations: Citation[]
+  /** Called with the 0-based index into the citations array. */
+  onCitationClick: (index: number) => void
 }
 
-type Token =
-  | { kind: 'word'; value: string }
-  | { kind: 'cite'; index: number }
+/**
+ * Renders answer text, replacing inline `[n]` markers with clickable
+ * citation badges. Display number `n` maps strictly to `citations[n - 1]`
+ * (index-safe). Markers with no matching citation are left as plain text.
+ */
+export function AnswerText({
+  answer,
+  citations,
+  onCitationClick,
+}: AnswerTextProps) {
+  let mappedAnswer = answer
+  citations.forEach((cite, i) => {
+    const regex = new RegExp('\\[' + cite.chunk_id + '\\]', 'g')
+    mappedAnswer = mappedAnswer.replace(regex, '[' + (i + 1) + ']')
+  })
 
-/** Split answer text into words and inline [n] citation markers. */
-function tokenize(text: string): Token[] {
-  const tokens: Token[] = []
-  const re = /\[(\d+)\]/g
-  let last = 0
-  let match: RegExpExecArray | null
-
-  const pushWords = (chunk: string) => {
-    for (const w of chunk.split(/(\s+)/)) {
-      if (w.length) tokens.push({ kind: 'word', value: w })
-    }
-  }
-
-  while ((match = re.exec(text)) !== null) {
-    pushWords(text.slice(last, match.index))
-    tokens.push({ kind: 'cite', index: Number(match[1]) })
-    last = re.lastIndex
-  }
-  pushWords(text.slice(last))
-  return tokens
-}
-
-export function AnswerText({ text, citationCount, onCite }: AnswerTextProps) {
-  const tokens = useMemo(() => tokenize(text), [text])
+  const paragraphs = mappedAnswer.split(/\n{2,}/).filter((p) => p.trim().length > 0)
+  const source = paragraphs.length > 0 ? paragraphs : [mappedAnswer]
 
   return (
-    <p className="text-pretty text-[15px] leading-[1.75] text-foreground/90 sm:text-base">
-      {tokens.map((token, i) => {
-        const delay = 0.15 + i * 0.012
-        if (token.kind === 'cite') {
-          const valid = token.index >= 1 && token.index <= citationCount
-          return (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay }}
-            >
-              {valid ? (
-                <CitationBadge index={token.index} onClick={onCite} />
-              ) : (
-                `[${token.index}]`
-              )}
-            </motion.span>
-          )
-        }
-        return (
-          <motion.span
-            key={i}
-            initial={{ opacity: 0, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            transition={{ duration: 0.3, delay }}
-          >
-            <Fragment>{token.value}</Fragment>
-          </motion.span>
-        )
-      })}
-    </p>
+    <div className="flex flex-col gap-4 text-[15px] leading-relaxed text-foreground/90">
+      {source.map((para, pIdx) => (
+        <p key={pIdx} className="text-pretty">
+          {renderWithCitations(para, citations.length, onCitationClick)}
+        </p>
+      ))}
+    </div>
   )
+}
+
+function renderWithCitations(
+  text: string,
+  citationCount: number,
+  onCitationClick: (index: number) => void,
+) {
+  // Split on bracketed numbers, keeping the delimiters.
+  const parts = text.split(/(\[\d+\])/g)
+
+  return parts.map((part, i) => {
+    const match = part.match(/^\[(\d+)\]$/)
+    if (match) {
+      const displayNumber = Number(match[1])
+      const index = displayNumber - 1
+      if (index >= 0 && index < citationCount) {
+        return (
+          <CitationBadge
+            key={i}
+            number={displayNumber}
+            onActivate={() => onCitationClick(index)}
+          />
+        )
+      }
+    }
+    return <Fragment key={i}>{part}</Fragment>
+  })
 }

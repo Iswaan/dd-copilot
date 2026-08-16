@@ -1,86 +1,79 @@
 'use client'
 
-import { motion } from 'motion/react'
-import { Loader2, Play } from 'lucide-react'
-import { MOTION } from '@/lib/config'
+import { ArrowRight } from 'lucide-react'
 import { TickerSelect } from './TickerSelect'
 import { QuestionInput } from './QuestionInput'
 import { ExampleChips } from './ExampleChips'
 
 interface QueryPanelProps {
   tickers: string[]
-  tickersLoading: boolean
-  selectedTicker: string | null
-  onTickerChange: (ticker: string | null) => void
+  ticker: string | null
+  onTickerChange: (value: string | null) => void
   question: string
-  onQuestionChange: (question: string) => void
+  onQuestionChange: (value: string) => void
+  exampleQuestions: string[]
   onSubmit: () => void
-  isRunning: boolean
+  isLoading: boolean
 }
 
 export function QueryPanel({
   tickers,
-  tickersLoading,
-  selectedTicker,
+  ticker,
   onTickerChange,
   question,
   onQuestionChange,
+  exampleQuestions,
   onSubmit,
-  isRunning,
+  isLoading,
 }: QueryPanelProps) {
-  const canRun = question.trim().length > 0 && !isRunning
+  const canSubmit = question.trim().length > 0 && !isLoading
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: MOTION.duration, ease: MOTION.ease, delay: 0.1 }}
-      className="rounded-xl border border-border bg-card p-5 sm:p-6"
-    >
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
-          <TickerSelect
-            tickers={tickers}
-            value={selectedTicker}
-            onChange={onTickerChange}
-            loading={tickersLoading}
-            disabled={isRunning}
-          />
-          <div className="flex-1">
-            <QuestionInput
-              value={question}
-              onChange={onQuestionChange}
-              onSubmit={onSubmit}
-              disabled={isRunning}
-            />
-          </div>
-        </div>
-
-        <ExampleChips onPick={onQuestionChange} disabled={isRunning} />
-
-        <div className="flex justify-end border-t border-border pt-4">
-          <motion.button
-            type="button"
-            onClick={onSubmit}
-            disabled={!canRun}
-            whileHover={canRun ? { scale: 1.02 } : undefined}
-            whileTap={canRun ? { scale: 0.98 } : undefined}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-          >
-            {isRunning ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Analyzing…
-              </>
-            ) : (
-              <>
-                <Play className="size-4 fill-current" />
-                Run Due Diligence
-              </>
-            )}
-          </motion.button>
-        </div>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <TickerSelect
+          tickers={tickers}
+          value={ticker}
+          onChange={onTickerChange}
+          disabled={isLoading}
+        />
+        <span className="hidden text-xs text-muted-foreground sm:block">
+          Answers cite the exact filing sections they came from
+        </span>
       </div>
-    </motion.section>
+
+      <div className="border-t border-border pt-5">
+        <QuestionInput
+          value={question}
+          onChange={onQuestionChange}
+          onSubmit={() => canSubmit && onSubmit()}
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="flex flex-col gap-5">
+        <ExampleChips
+          questions={exampleQuestions}
+          onSelect={onQuestionChange}
+          disabled={isLoading}
+        />
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className="group inline-flex items-center justify-center gap-2 self-start rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ boxShadow: '0 0 30px -6px var(--glow-soft)' }}
+        >
+          {isLoading ? 'Analyzing filings…' : 'Run Due Diligence'}
+          {!isLoading && (
+            <ArrowRight
+              className="size-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          )}
+        </button>
+      </div>
+    </div>
   )
 }

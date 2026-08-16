@@ -1,28 +1,31 @@
-import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Playfair_Display, Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
-const geistSans = Geist({
+const playfair = Playfair_Display({
   subsets: ['latin'],
-  variable: '--font-geist-sans',
+  variable: '--font-playfair',
+  display: 'swap',
 })
 
-const geistMono = Geist_Mono({
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-geist-mono',
+  variable: '--font-inter',
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
   title: 'AI Due Diligence Copilot',
   description:
-    'Source-backed due diligence in seconds — AI answers about public companies, cited from SEC filings.',
+    'Ask due-diligence questions about public companies and get AI-generated, source-cited answers from SEC filings.',
   generator: 'v0.app',
 }
 
 export const viewport: Viewport = {
   colorScheme: 'dark',
-  themeColor: '#111826',
+  themeColor: '#06060b',
+  userScalable: true,
 }
 
 export default function RootLayout({
@@ -31,8 +34,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
-      <body className="font-sans antialiased">
+    <html lang="en" className={`dark ${playfair.variable} ${inter.variable}`}>
+      <body className="bg-background font-sans antialiased">
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

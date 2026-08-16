@@ -1,19 +1,20 @@
 'use client'
 
 interface CitationBadgeProps {
-  index: number // 1-based citation number
-  onClick: (index: number) => void
+  /** 1-based display number shown to the user. */
+  number: number
+  onActivate: () => void
 }
 
-export function CitationBadge({ index, onClick }: CitationBadgeProps) {
+export function CitationBadge({ number, onActivate }: CitationBadgeProps) {
   return (
     <button
       type="button"
-      onClick={() => onClick(index)}
-      aria-label={`Jump to source ${index}`}
-      className="mx-0.5 inline-flex h-[18px] min-w-[18px] translate-y-[-2px] items-center justify-center rounded-[5px] border border-primary/40 bg-primary/15 px-1 align-middle font-mono text-[11px] font-semibold leading-none text-primary transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={onActivate}
+      aria-label={`Jump to source ${number}`}
+      className="mx-0.5 inline-flex h-5 min-w-5 translate-y-[-1px] items-center justify-center rounded-full border border-primary/40 bg-primary/15 px-1.5 align-middle text-[11px] font-semibold leading-none text-primary transition-all hover:bg-primary/30 hover:shadow-[0_0_12px_var(--glow-soft)]"
     >
-      {index}
+      {number}
     </button>
   )
 }
