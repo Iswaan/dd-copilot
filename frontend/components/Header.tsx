@@ -1,8 +1,12 @@
-'use client'
+﻿'use client'
 
+import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
+import { ModelSelect, type ModelOption } from './ModelSelect'
 
 export function Header() {
+  const [model, setModel] = useState<ModelOption>('groq')
+
   return (
     <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
       <div className="flex items-center gap-2.5">
@@ -15,12 +19,7 @@ export function Header() {
       </div>
 
       <nav className="hidden items-center gap-8 text-sm text-muted-foreground sm:flex">
-        <a href="#query" className="transition-colors hover:text-foreground">
-          Ask
-        </a>
-        <a href="#stats" className="transition-colors hover:text-foreground">
-          Coverage
-        </a>
+        <ModelSelect value={model} onChange={setModel} />
       </nav>
 
       <a

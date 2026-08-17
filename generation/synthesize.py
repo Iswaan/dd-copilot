@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import anthropic
 import ollama
@@ -10,8 +10,9 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 
 GENERATION_BACKEND = "groq"
 
-def _call_backend(system_prompt, prompt):
-    if GENERATION_BACKEND == "ollama":
+def _call_backend(system_prompt, prompt, model_override=None):
+    backend_to_use = model_override if model_override else GENERATION_BACKEND
+    if backend_to_use == "ollama":
         try:
             response = ollama.chat(
                 model='llama3:latest',
@@ -24,7 +25,7 @@ def _call_backend(system_prompt, prompt):
         except Exception as e:
             return f"Ollama Error: {str(e)}"
             
-    elif GENERATION_BACKEND == "anthropic":
+    elif backend_to_use == "anthropic":
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if not api_key:
             return "Error: ANTHROPIC_API_KEY not set."
@@ -40,7 +41,7 @@ def _call_backend(system_prompt, prompt):
         except Exception as e:
             return f"API Error: {str(e)}"
             
-    elif GENERATION_BACKEND == "groq":
+    elif backend_to_use == "groq":
         api_key = os.environ.get("GROQ_API_KEY", "")
         if not api_key:
             return "Error: GROQ_API_KEY not set."
@@ -58,7 +59,7 @@ def _call_backend(system_prompt, prompt):
         except Exception as e:
             return f"Groq API Error: {str(e)}"
             
-    elif GENERATION_BACKEND == "openrouter":
+    elif backend_to_use == "openrouter":
         api_key = os.environ.get("OPENROUTER_API_KEY", "")
         if not api_key:
             return "Error: OPENROUTER_API_KEY not set."
@@ -82,7 +83,7 @@ def _call_backend(system_prompt, prompt):
             return f"OpenRouter API Error: {str(e)}"
     
     else:
-        return f"Error: Unknown GENERATION_BACKEND '{GENERATION_BACKEND}'"
+        return f"Error: Unknown GENERATION_BACKEND '{backend_to_use}'"
 
 def validate_output(answer_text, chunks):
     # 1. Reasoning leakage
@@ -125,7 +126,7 @@ def validate_output(answer_text, chunks):
             
     return True, ""
 
-def generate_answer(query: str, chunks: list) -> dict:
+def generate_answer(query: str, chunks: list, model_override: str = None) -> dict:
     chunks_text = ""
     for c in chunks:
         chunks_text += f"\n<chunk id=\"{c['chunk_id']}\">\nSource: {c['metadata']['ticker']} {c['metadata']['filing_type']} - {c['metadata']['section_heading']}\n{c['text']}\n</chunk>\n"
@@ -152,7 +153,7 @@ Risks/Caveats: (data-gap caveats or limitations)"""
             retry_instruction = "Your previous response violated the required output format. Regenerate ONLY the final answer. Do not include analysis, planning, or meta-commentary. Use only the supplied context. Every factual claim must use an exact [chunk_id] citation corresponding to a retrieved chunk. Preserve the required Summary, Key Findings, and Risks/Caveats structure where applicable."
             prompt = f"{original_prompt}\n\n{retry_instruction}"
 
-        answer_text = _call_backend(system_prompt, prompt)
+        answer_text = _call_backend(system_prompt, prompt, model_override=model_override)
         
         if "Error:" in answer_text or "API Error" in answer_text:
             break
@@ -201,3 +202,4 @@ Risks/Caveats: (data-gap caveats or limitations)"""
         "raw_chunks_used": valid_cited_ids,
         "invalid_citations": invalid_cited_ids
     }
+

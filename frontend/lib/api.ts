@@ -1,4 +1,4 @@
-// Isolated fetch functions. No UI code here — only network + parsing.
+﻿// Isolated fetch functions. No UI code here — only network + parsing.
 
 import { API_BASE_URL } from './config'
 import type { QueryResponse, TickersResponse } from './types'
@@ -12,9 +12,16 @@ class ApiError extends Error {
 
 async function parseJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    throw new ApiError(
-      `Request failed with status ${res.status} ${res.statusText}`.trim(),
-    )
+    let errorDetail = `Request failed with status ${res.status} ${res.statusText}`.trim()
+    try {
+      const errBody = await res.json()
+      if (errBody && typeof errBody.detail === 'string') {
+        errorDetail = errBody.detail
+      }
+    } catch {
+      // Ignored
+    }
+    throw new ApiError(errorDetail)
   }
   try {
     return (await res.json()) as T
@@ -43,6 +50,7 @@ export async function getTickers(signal?: AbortSignal): Promise<string[]> {
 export async function postQuery(
   question: string,
   ticker: string | null,
+  model?: string,
   signal?: AbortSignal,
 ): Promise<QueryResponse> {
   let res: Response
@@ -53,7 +61,7 @@ export async function postQuery(
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify({ question, ticker }),
+      body: JSON.stringify({ question, ticker, model }),
       signal,
     })
   } catch {

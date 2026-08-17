@@ -1,4 +1,4 @@
-// Contract types shared across the app. Keep these aligned with the API.
+﻿// Contract types shared across the app. Keep these aligned with the API.
 
 export type Confidence = 'high' | 'medium' | 'low'
 
@@ -17,6 +17,7 @@ export interface TickersResponse {
 export interface QueryRequest {
   question: string
   ticker: string | null
+  model?: string
 }
 
 export interface QueryResponse {
@@ -26,3 +27,4 @@ export interface QueryResponse {
 }
 
 export type Status = 'idle' | 'loading' | 'success' | 'error'
+

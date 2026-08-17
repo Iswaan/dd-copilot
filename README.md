@@ -1,14 +1,14 @@
-﻿# 🚀 AI Due Diligence Copilot
+﻿# 🔍 AI Due Diligence Copilot
 
 An enterprise-grade hybrid-RAG (Retrieval-Augmented Generation) pipeline for deep-diving into complex SEC filings, earnings transcripts, and financial documents. Built with FastAPI and Next.js, featuring a stunning glassmorphic UI.
 
-## 📱 Interactive Interface
+## ✨ Interactive Interface
 
 The Copilot features a beautiful, highly responsive, mobile-first frontend. Below is a real-time demonstration of the end-to-end query flow, showcasing the dynamic sunrise hero background and interactive citation system:
 
 ![UI Demonstration](assets/demo.webp)
 
-## 🏗 Architecture & Features
+## 🏗️ Architecture & Features
 
 This system is built from the ground up to solve the hardest challenges in financial RAG (hallucinations, loss of context, and source attribution):
 
@@ -18,7 +18,7 @@ This system is built from the ground up to solve the hardest challenges in finan
 - **Pluggable LLM Backend**: Configured to use Groq (llama-3.3-70b-versatile) for blazing-fast inference, but supports Anthropic, OpenAI, or local Ollama.
 - **RAGAS Evaluation**: Integrated evaluation pipeline that algorithmically scores Faithfulness, Answer Relevance, Context Precision, and Context Recall using a local llama3 judge to ensure production-quality responses without hallucinations.
 
-## 🛠 Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend (Next.js)
 - **Framework**: Next.js 14 (App Router)
@@ -29,7 +29,7 @@ This system is built from the ground up to solve the hardest challenges in finan
 ### Backend (Python / FastAPI)
 - **API**: FastAPI (Uvicorn)
 - **Vector Store**: ChromaDB
-- **Embeddings & NLP**: sentence-transformers (BGE), ank_bm25
+- **Embeddings & NLP**: sentence-transformers (BGE), rank_bm25
 - **LLM Integration**: Groq API, LangChain
 - **Evaluation**: RAGAS + local Ollama
 
@@ -43,34 +43,38 @@ This system is built from the ground up to solve the hardest challenges in finan
 ### Installation
 
 1. **Clone & Setup Environment**
-   `ash
+   \\\ash
    git clone <repo_url>
    cd dd-copilot
    python -m venv venv
    source venv/bin/activate  # or venv\Scripts\activate on Windows
    pip install -r requirements.txt
-   `
+   \\\
 
 2. **Frontend Setup**
-   `ash
+   \\\ash
    cd frontend
    npm install
-   `
+   \\\
 
 3. **Start the Copilot**
    Use the provided development script to launch both the FastAPI backend and Next.js frontend simultaneously:
-   `ash
+   \\\ash
    ./dev.sh
-   `
+   \\\
    The UI will be available at http://localhost:3000.
 
-## 🧪 Evaluation
+## 📈 Evaluation
 
 To run the RAGAS evaluation pipeline against your local models:
-`ash
+\\\ash
 python eval/rerun_q14_20.py
-`
+\\\
 This incrementally evaluates the system's answers against ground-truth and saves progress to partial_results.json.
+
+## ⚠️ Known Limitations
+
+- **Retrieval and Chunking Gaps**: Extremely brief factual mentions buried inside massive narrative sections (such as an exact employee headcount in a company's human capital section) may occasionally fail to surface in the top-k retrieved chunks, despite existing perfectly in the parsed data (e.g., Apple's ~164,000 employee count). This is a known BM25/vector-search ranking limitation that we are actively optimizing.
 
 ---
 *Built for absolute confidence in AI-assisted financial diligence.*

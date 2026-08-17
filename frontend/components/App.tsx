@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -16,11 +16,13 @@ import { ResultsPanel } from './ResultsPanel'
 import { LoadingState } from './LoadingState'
 import { EmptyState } from './EmptyState'
 import { ErrorState } from './ErrorState'
+import type { ModelOption } from './ModelSelect'
 
 export function App() {
   const [tickers, setTickers] = useState<string[]>(FALLBACK_TICKERS)
   const [ticker, setTicker] = useState<string | null>(null)
   const [question, setQuestion] = useState('')
+  const [model, setModel] = useState<ModelOption>('groq')
   const [status, setStatus] = useState<Status>('idle')
   const [result, setResult] = useState<QueryResponse | null>(null)
   const [error, setError] = useState<string>('')
@@ -52,7 +54,7 @@ export function App() {
     setResult(null)
 
     try {
-      const data = await postQuery(trimmed, ticker, controller.signal)
+      const data = await postQuery(trimmed, ticker, model, controller.signal)
       setResult(data)
       setStatus('success')
     } catch (err) {
@@ -96,7 +98,7 @@ export function App() {
 
           <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground text-pretty">
             Ask anything about a public company and get AI answers grounded in
-            its SEC filings — every claim cited back to the source.
+            its SEC filings â€” every claim cited back to the source.
           </p>
 
           {/* trust strip */}
@@ -112,15 +114,15 @@ export function App() {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Indexed across {INDEX_STATS.companies} companies ·{' '}
-              {INDEX_STATS.filings} filings · {INDEX_STATS.chunks} verified
+              Indexed across {INDEX_STATS.companies} companies Â·{' '}
+              {INDEX_STATS.filings} filings Â· {INDEX_STATS.chunks} verified
               chunks
             </p>
           </div>
           </div>
         </section>
 
-        {/* Query + results — one continuous glowing card */}
+        {/* Query + results â€” one continuous glowing card */}
         <section id="query" className="relative z-10 scroll-mt-24">
           <div className="glass glass-glow rounded-3xl p-6 sm:p-8">
             <QueryPanel
@@ -130,6 +132,8 @@ export function App() {
               question={question}
               onQuestionChange={setQuestion}
               exampleQuestions={EXAMPLE_QUESTIONS}
+              model={model}
+              onModelChange={setModel}
               onSubmit={runQuery}
               isLoading={status === 'loading'}
             />
@@ -179,3 +183,4 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   )
 }
+

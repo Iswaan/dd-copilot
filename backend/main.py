@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+﻿from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -23,6 +23,7 @@ print("Models loaded successfully.")
 class QueryRequest(BaseModel):
     question: str
     ticker: Optional[str] = None
+    model: Optional[str] = None
 
 class Citation(BaseModel):
     chunk_id: str
@@ -58,7 +59,12 @@ def post_query(req: QueryRequest):
         from generation.synthesize import generate_answer
         from generation.confidence import score_confidence
         
-        gen_result = generate_answer(req.question, final_candidates)
+        gen_result = generate_answer(req.question, final_candidates, model_override=req.model)
+        
+        answer_text = gen_result.get('answer', '')
+        error_markers = ['api error', 'rate limit', '429', 'rate_limit_exceeded']
+        if any(marker in answer_text.lower() for marker in error_markers):
+            raise HTTPException(status_code=503, detail='The selected model is temporarily unavailable — try another model or wait a moment.')
         
         cited_chunks = []
         rerank_scores = []
@@ -89,3 +95,4 @@ def post_query(req: QueryRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
