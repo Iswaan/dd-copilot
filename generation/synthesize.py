@@ -8,11 +8,18 @@ from dotenv import load_dotenv
 
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env'))
 
-GENERATION_BACKEND = "groq"
+# Auto-cascade order: try each in order until one succeeds
+MODEL_CASCADE = ["groq", "openrouter", "ollama"]
 
-def _call_backend(system_prompt, prompt, model_override=None):
-    backend_to_use = model_override if model_override else GENERATION_BACKEND
-    if backend_to_use == "ollama":
+MODEL_LABELS = {
+    "groq": "Groq · Llama 3.3 70B",
+    "openrouter": "OpenRouter · GPT-OSS 20B",
+    "ollama": "Ollama · Llama 3 8B (Local)",
+}
+
+def _call_backend(system_prompt, prompt, backend):
+    """Call a specific backend. Returns (text, error) tuple."""
+    if backend == "ollama":
         try:
             response = ollama.chat(
                 model='llama3:latest',
@@ -21,30 +28,14 @@ def _call_backend(system_prompt, prompt, model_override=None):
                     {'role': 'user', 'content': prompt}
                 ]
             )
-            return response['message']['content']
+            return response['message']['content'], None
         except Exception as e:
-            return f"Ollama Error: {str(e)}"
-            
-    elif backend_to_use == "anthropic":
-        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-        if not api_key:
-            return "Error: ANTHROPIC_API_KEY not set."
-        client = anthropic.Anthropic(api_key=api_key)
-        try:
-            response = client.messages.create(
-                model="claude-sonnet-4-6",
-                max_tokens=1024,
-                system=system_prompt,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text
-        except Exception as e:
-            return f"API Error: {str(e)}"
-            
-    elif backend_to_use == "groq":
+            return None, f"Ollama Error: {str(e)}"
+
+    elif backend == "groq":
         api_key = os.environ.get("GROQ_API_KEY", "")
         if not api_key:
-            return "Error: GROQ_API_KEY not set."
+            return None, "Error: GROQ_API_KEY not set."
         client = groq.Groq(api_key=api_key)
         try:
             response = client.chat.completions.create(
@@ -55,18 +46,19 @@ def _call_backend(system_prompt, prompt, model_override=None):
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content, None
         except Exception as e:
-            return f"Groq API Error: {str(e)}"
-            
-    elif backend_to_use == "openrouter":
+            err = str(e)
+            return None, f"Groq API Error: {err}"
+
+    elif backend == "openrouter":
         api_key = os.environ.get("OPENROUTER_API_KEY", "")
         if not api_key:
-            return "Error: OPENROUTER_API_KEY not set."
+            return None, "Error: OPENROUTER_API_KEY not set."
         client = openai.OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
-            max_retries=0, # Disable automatic hangs
+            max_retries=0,
         )
         try:
             response = client.chat.completions.create(
@@ -78,12 +70,28 @@ def _call_backend(system_prompt, prompt, model_override=None):
                     {"role": "user", "content": prompt}
                 ]
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content, None
         except Exception as e:
-            return f"OpenRouter API Error: {str(e)}"
-    
+            return None, f"OpenRouter API Error: {str(e)}"
+
     else:
-        return f"Error: Unknown GENERATION_BACKEND '{backend_to_use}'"
+        return None, f"Error: Unknown backend '{backend}'"
+
+
+def _call_with_cascade(system_prompt, prompt):
+    """Try backends in cascade order. Returns (text, backend_used, error)."""
+    last_error = None
+    for backend in MODEL_CASCADE:
+        print(f"[Cascade] Trying backend: {backend}")
+        text, err = _call_backend(system_prompt, prompt, backend)
+        if text is not None:
+            print(f"[Cascade] Success with backend: {backend}")
+            return text, backend, None
+        else:
+            print(f"[Cascade] Backend '{backend}' failed: {err}")
+            last_error = err
+    return None, None, last_error
+
 
 def validate_output(answer_text, chunks):
     # 1. Reasoning leakage
@@ -102,31 +110,32 @@ def validate_output(answer_text, chunks):
     for phrase in leakage_phrases:
         if phrase in lower_ans:
             return False, f"Reasoning leakage detected: '{phrase}'"
-            
+
     # 2. Malformed citations
     for match in re.finditer(r"([a-f0-9\-]{36})", answer_text):
         start, end = match.span()
         if start == 0 or end == len(answer_text) or answer_text[start-1] != '[' or answer_text[end] != ']':
             return False, "Malformed citation detected (must be exactly [chunk_id])"
-            
+
     # 3. Grounding (unknown citations)
     valid_chunk_ids = {c['chunk_id'] for c in chunks}
     extracted_ids = re.findall(r"\[([a-f0-9\-]{36})\]", answer_text)
     for cid in extracted_ids:
         if cid not in valid_chunk_ids:
             return False, f"Unknown citation detected: [{cid}]"
-            
+
     # 4. Structure
     has_summary = "Summary:" in answer_text
     has_key_findings = "Key Findings:" in answer_text
-    
+
     if len(extracted_ids) > 0:
         if not (has_summary and has_key_findings):
             return False, "Supported answer missing Summary or Key Findings"
-            
+
     return True, ""
 
-def generate_answer(query: str, chunks: list, model_override: str = None) -> dict:
+
+def generate_answer(query: str, chunks: list) -> dict:
     chunks_text = ""
     for c in chunks:
         chunks_text += f"\n<chunk id=\"{c['chunk_id']}\">\nSource: {c['metadata']['ticker']} {c['metadata']['filing_type']} - {c['metadata']['section_heading']}\n{c['text']}\n</chunk>\n"
@@ -143,43 +152,49 @@ Risks/Caveats: (data-gap caveats or limitations)"""
 
     original_prompt = f"User Query: {query}\n\nProvided Chunks:\n{chunks_text}"
     prompt = original_prompt
-    
+
     max_retries = 2
     attempts = 0
     answer_text = ""
-    
+    backend_used = None
+
     while attempts <= max_retries:
         if attempts > 0:
             retry_instruction = "Your previous response violated the required output format. Regenerate ONLY the final answer. Do not include analysis, planning, or meta-commentary. Use only the supplied context. Every factual claim must use an exact [chunk_id] citation corresponding to a retrieved chunk. Preserve the required Summary, Key Findings, and Risks/Caveats structure where applicable."
             prompt = f"{original_prompt}\n\n{retry_instruction}"
 
-        answer_text = _call_backend(system_prompt, prompt, model_override=model_override)
-        
-        if "Error:" in answer_text or "API Error" in answer_text:
+        text, used_backend, err = _call_with_cascade(system_prompt, prompt)
+
+        if text is None:
+            # All backends failed
+            answer_text = f"Error: All LLM backends failed. Last error: {err}"
             break
-            
+
+        backend_used = used_backend
+        answer_text = text
+
         is_valid, error_msg = validate_output(answer_text, chunks)
-        
+
         if is_valid:
-            print(f"Generation succeeded on attempt {attempts}")
+            print(f"Generation succeeded on attempt {attempts} via {backend_used}")
             break
         else:
             print(f"Validation failed on attempt {attempts}: {error_msg}")
             if attempts == max_retries:
-                answer_text = f"Validation Error: Maximum retries exhausted. Last error: {error_msg}\n\nLast output:\n{answer_text}"
+                # Accept the last output even if imperfect
+                print(f"Max retries reached, accepting last output from {backend_used}")
                 break
-        
+
         attempts += 1
 
     # Extract citations strictly
-    import re
     valid_chunk_ids = {c['chunk_id'] for c in chunks}
     extracted_ids = list(set(re.findall(r"\[([a-f0-9\-]{36})\]", answer_text)))
-    
+
     citations = []
     valid_cited_ids = []
     invalid_cited_ids = []
-    
+
     for cid in extracted_ids:
         if cid in valid_chunk_ids:
             valid_cited_ids.append(cid)
@@ -195,11 +210,11 @@ Risks/Caveats: (data-gap caveats or limitations)"""
                     break
         else:
             invalid_cited_ids.append(cid)
-            
+
     return {
         "answer": answer_text,
         "citations": citations,
         "raw_chunks_used": valid_cited_ids,
-        "invalid_citations": invalid_cited_ids
+        "invalid_citations": invalid_cited_ids,
+        "model_used": MODEL_LABELS.get(backend_used, backend_used or "unknown"),
     }
-

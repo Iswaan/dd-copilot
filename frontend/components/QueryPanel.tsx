@@ -1,11 +1,9 @@
 ﻿'use client'
 
-import { useState } from 'react'
-import { ArrowRight, Settings2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { TickerSelect } from './TickerSelect'
 import { QuestionInput } from './QuestionInput'
 import { ExampleChips } from './ExampleChips'
-import { ModelSelect, ModelOption } from './ModelSelect'
 
 interface QueryPanelProps {
   tickers: string[]
@@ -16,8 +14,6 @@ interface QueryPanelProps {
   exampleQuestions: string[]
   onSubmit: () => void
   isLoading: boolean
-  model: ModelOption
-  onModelChange: (value: ModelOption) => void
 }
 
 export function QueryPanel({
@@ -29,10 +25,7 @@ export function QueryPanel({
   exampleQuestions,
   onSubmit,
   isLoading,
-  model,
-  onModelChange,
 }: QueryPanelProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const canSubmit = question.trim().length > 0 && !isLoading
 
   return (
@@ -64,23 +57,6 @@ export function QueryPanel({
           onSelect={onQuestionChange}
           disabled={isLoading}
         />
-
-        <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 self-start text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Settings2 className="size-3.5" />
-            Advanced
-          </button>
-          
-          {showAdvanced && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-              <ModelSelect value={model} onChange={onModelChange} disabled={isLoading} />
-            </div>
-          )}
-        </div>
 
         <button
           type="button"

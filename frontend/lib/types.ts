@@ -17,14 +17,13 @@ export interface TickersResponse {
 export interface QueryRequest {
   question: string
   ticker: string | null
-  model?: string
 }
 
 export interface QueryResponse {
   answer: string
   citations: Citation[]
   confidence: Confidence
+  model_used: string
 }
 
 export type Status = 'idle' | 'loading' | 'success' | 'error'
-

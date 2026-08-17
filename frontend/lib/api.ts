@@ -1,4 +1,4 @@
-﻿// Isolated fetch functions. No UI code here — only network + parsing.
+﻿// Isolated fetch functions. No UI code here - only network + parsing.
 
 import { API_BASE_URL } from './config'
 import type { QueryResponse, TickersResponse } from './types'
@@ -50,7 +50,6 @@ export async function getTickers(signal?: AbortSignal): Promise<string[]> {
 export async function postQuery(
   question: string,
   ticker: string | null,
-  model?: string,
   signal?: AbortSignal,
 ): Promise<QueryResponse> {
   let res: Response
@@ -61,7 +60,7 @@ export async function postQuery(
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify({ question, ticker, model }),
+      body: JSON.stringify({ question, ticker }),
       signal,
     })
   } catch {
@@ -74,6 +73,7 @@ export async function postQuery(
     answer: data.answer ?? '',
     citations: Array.isArray(data.citations) ? data.citations : [],
     confidence: data.confidence ?? 'low',
+    model_used: data.model_used ?? 'unknown',
   }
 }
 

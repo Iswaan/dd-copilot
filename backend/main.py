@@ -23,7 +23,6 @@ print("Models loaded successfully.")
 class QueryRequest(BaseModel):
     question: str
     ticker: Optional[str] = None
-    model: Optional[str] = None
 
 class Citation(BaseModel):
     chunk_id: str
@@ -36,6 +35,7 @@ class QueryResponse(BaseModel):
     answer: str
     citations: List[Citation]
     confidence: str
+    model_used: str
 
 @app.get("/health")
 def health_check():
@@ -49,23 +49,21 @@ def get_tickers():
 def post_query(req: QueryRequest):
     try:
         hybrid_candidates = pipeline.retriever.hybrid_search(
-            req.question, 
-            top_k=20, 
+            req.question,
+            top_k=20,
             ticker_filter=req.ticker if req.ticker and req.ticker != "multi" else None
         )
-        
+
         final_candidates = pipeline.reranker.rerank(req.question, hybrid_candidates, top_n=6)
-        
+
         from generation.synthesize import generate_answer
         from generation.confidence import score_confidence
-        
-        gen_result = generate_answer(req.question, final_candidates, model_override=req.model)
-        
+
+        gen_result = generate_answer(req.question, final_candidates)
+
         answer_text = gen_result.get('answer', '')
-        error_markers = ['api error', 'rate limit', '429', 'rate_limit_exceeded']
-        if any(marker in answer_text.lower() for marker in error_markers):
-            raise HTTPException(status_code=503, detail='The selected model is temporarily unavailable — try another model or wait a moment.')
-        
+        model_used = gen_result.get('model_used', 'unknown')
+
         cited_chunks = []
         rerank_scores = []
         for cid in gen_result.get("raw_chunks_used", []):
@@ -74,9 +72,9 @@ def post_query(req: QueryRequest):
                     cited_chunks.append(c)
                     rerank_scores.append(c.get("rerank_score", 0.0))
                     break
-                    
+
         confidence = score_confidence(cited_chunks, rerank_scores)
-        
+
         citations = []
         for c in gen_result.get("citations", []):
             citations.append(Citation(
@@ -86,13 +84,18 @@ def post_query(req: QueryRequest):
                 section_heading=c.get("section_heading", ""),
                 source_url=c.get("source_url", "")
             ))
-            
+
         return QueryResponse(
             answer=gen_result.get("answer", ""),
             citations=citations,
-            confidence=confidence
+            confidence=confidence,
+            model_used=model_used,
         )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"UNHANDLED EXCEPTION in post_query: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
