@@ -1,6 +1,5 @@
 ﻿import os
 import re
-import anthropic
 import ollama
 import groq
 import openai
@@ -12,9 +11,9 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 MODEL_CASCADE = ["groq", "openrouter", "ollama"]
 
 MODEL_LABELS = {
-    "groq": "Groq · Llama 3.3 70B",
-    "openrouter": "OpenRouter · GPT-OSS 20B",
-    "ollama": "Ollama · Llama 3 8B (Local)",
+    "groq": "Groq - GPT-OSS 120B",
+    "openrouter": "OpenRouter - GPT-OSS 20B",
+    "ollama": "Ollama - Llama 3 8B (Local)",
 }
 
 def _call_backend(system_prompt, prompt, backend):
@@ -39,7 +38,7 @@ def _call_backend(system_prompt, prompt, backend):
         client = groq.Groq(api_key=api_key)
         try:
             response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="openai/gpt-oss-120b",
                 max_tokens=1024,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -94,22 +93,33 @@ def _call_with_cascade(system_prompt, prompt):
 
 
 def validate_output(answer_text, chunks):
-    # 1. Reasoning leakage
-    leakage_phrases = [
+    lower_ans = answer_text.lower()
+
+    # 1. Reasoning/estimation leakage - model is fabricating instead of citing
+    hallucination_phrases = [
         "we need to answer",
         "let's extract",
         "let's analyze",
+        "let's assume",
         "we need to determine",
         "i need to ",
         "the user asks",
         "reasoning:",
         "analysis:",
-        "chain of thought:"
+        "chain of thought:",
+        "data-driven answer:",
+        "it appears that",
+        "it is likely that",
+        "let me calculate",
+        "based on this information, it appears",
+        "we can estimate",
+        "an educated estimate",
+        "approximately $",
+        "my estimate",
     ]
-    lower_ans = answer_text.lower()
-    for phrase in leakage_phrases:
+    for phrase in hallucination_phrases:
         if phrase in lower_ans:
-            return False, f"Reasoning leakage detected: '{phrase}'"
+            return False, f"Hallucination/estimation detected: '{phrase}'"
 
     # 2. Malformed citations
     for match in re.finditer(r"([a-f0-9\-]{36})", answer_text):
@@ -124,7 +134,7 @@ def validate_output(answer_text, chunks):
         if cid not in valid_chunk_ids:
             return False, f"Unknown citation detected: [{cid}]"
 
-    # 4. Structure
+    # 4. Structure check (only if answer has citations — pure refusals are fine)
     has_summary = "Summary:" in answer_text
     has_key_findings = "Key Findings:" in answer_text
 
@@ -140,15 +150,18 @@ def generate_answer(query: str, chunks: list) -> dict:
     for c in chunks:
         chunks_text += f"\n<chunk id=\"{c['chunk_id']}\">\nSource: {c['metadata']['ticker']} {c['metadata']['filing_type']} - {c['metadata']['section_heading']}\n{c['text']}\n</chunk>\n"
 
-    system_prompt = """You are a meticulous financial due diligence AI. You answer user queries based strictly on the provided SEC filing chunks.
-Follow these rules:
-1. TRUE REFUSAL CASE (e.g. asking for a forward-looking stock price target, which SEC filings never disclose): If the retrieved chunks contain no information at all relevant to the question, refuse in 1-2 sentences. Do not summarize unrelated information from the chunks first.
-2. PARTIAL/NARRATIVE CASE (e.g. asking for debt maturities when no dedicated debt maturity table exists): If the retrieved chunks don't contain a clean, structured, complete answer, but DO contain genuinely relevant partial information (e.g. narrative disclosures about credit risk, liquidity, or debt-adjacent context), synthesize an answer from what's actually there. Cite it normally, and explicitly caveat in the Risks/Caveats section that no dedicated/structured disclosure was found and this is based on partial narrative information. Do NOT refuse outright.
-3. Every factual claim must be followed by an inline citation pointing to the specific chunk it came from, using the exact format: [chunk_id]. Citations must appear in EXACTLY this format: [chunk_id] - for example [da8c968c-ea13-421d-9d7b-fc6c2b288455]. Do not add labels, prefixes, or extra text inside the brackets.
-4. Structure the answer exactly as follows (omitting Risks/Caveats if not applicable):
-Summary: (2-3 sentences)
-Key Findings: (bulleted, each with a citation)
-Risks/Caveats: (data-gap caveats or limitations)"""
+    system_prompt = """You are a strict financial due diligence AI. You answer ONLY from the provided SEC filing chunks. Fabricating, estimating, or reasoning beyond the text is FORBIDDEN.
+
+RULES (follow exactly):
+1. REFUSAL: If the chunks contain no relevant information, say in 1-2 sentences that the information is not available in the provided filings. Do NOT estimate, guess, or calculate.
+2. PARTIAL ANSWER: If chunks have partial relevant info, use only what is explicitly stated. Cite every fact. Caveat gaps in Risks/Caveats.
+3. CITATIONS: Every factual claim MUST end with [chunk_id] in exactly this format. No labels, no prefixes inside brackets.
+4. NO FABRICATION: Do NOT use phrases like "let's assume", "approximately", "we can estimate", "it appears", "likely to be", or any arithmetic invented by you. Only cite what is literally in the text.
+5. FORMAT (when citations exist):
+   Summary: (2-3 sentences, factual only)
+   Key Findings:
+   - finding [chunk_id]
+   Risks/Caveats: (gaps or limitations)"""
 
     original_prompt = f"User Query: {query}\n\nProvided Chunks:\n{chunks_text}"
     prompt = original_prompt
@@ -160,13 +173,17 @@ Risks/Caveats: (data-gap caveats or limitations)"""
 
     while attempts <= max_retries:
         if attempts > 0:
-            retry_instruction = "Your previous response violated the required output format. Regenerate ONLY the final answer. Do not include analysis, planning, or meta-commentary. Use only the supplied context. Every factual claim must use an exact [chunk_id] citation corresponding to a retrieved chunk. Preserve the required Summary, Key Findings, and Risks/Caveats structure where applicable."
+            retry_instruction = (
+                "IMPORTANT: Your previous response was REJECTED. You violated the rules by estimating, reasoning, or fabricating data. "
+                "Regenerate the answer using ONLY facts explicitly stated in the chunk text above. "
+                "If the exact information is not in the chunks, respond with a 1-2 sentence refusal. "
+                "Do NOT calculate, estimate, or assume anything. Every claim must have a [chunk_id] citation."
+            )
             prompt = f"{original_prompt}\n\n{retry_instruction}"
 
         text, used_backend, err = _call_with_cascade(system_prompt, prompt)
 
         if text is None:
-            # All backends failed
             answer_text = f"Error: All LLM backends failed. Last error: {err}"
             break
 
@@ -181,8 +198,9 @@ Risks/Caveats: (data-gap caveats or limitations)"""
         else:
             print(f"Validation failed on attempt {attempts}: {error_msg}")
             if attempts == max_retries:
-                # Accept the last output even if imperfect
-                print(f"Max retries reached, accepting last output from {backend_used}")
+                # Force a clean refusal rather than surfacing a hallucinated answer
+                answer_text = "The information requested could not be found in the indexed SEC filing chunks. Please try rephrasing your question or check that the relevant filing has been indexed."
+                print(f"Max retries exhausted, returning safe refusal.")
                 break
 
         attempts += 1
@@ -218,3 +236,4 @@ Risks/Caveats: (data-gap caveats or limitations)"""
         "invalid_citations": invalid_cited_ids,
         "model_used": MODEL_LABELS.get(backend_used, backend_used or "unknown"),
     }
+
